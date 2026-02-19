@@ -122,11 +122,11 @@ public class AwtRobotScreenRecorder implements ArcticScreenRecorder {
         if (os.contains("linux")) {
             captureCmdResult = saveScreenToFile("gnome-screenshot", "-p", "-f", filename);
         } else if (os.contains("mac")) {
-            captureCmdResult = saveScreenToFile("screencapture", "-C", filename);
+            throw new RuntimeException("Mac native capture is not supported yet");
         } else if (os.contains("win")) {
-            throw new RuntimeException("Windows is not supported yet");
+            throw new RuntimeException("Windows native capture is not supported yet");
         } else {
-            throw new RuntimeException(os + " is not supported");
+            throw new RuntimeException(os + "native capture is not supported");
         }
         if (captureCmdResult != 0) {
             throw new RuntimeException("Failed to capture screen using native tool");
