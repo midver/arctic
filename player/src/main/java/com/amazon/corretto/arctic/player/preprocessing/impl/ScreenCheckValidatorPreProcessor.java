@@ -29,6 +29,7 @@ import com.amazon.corretto.arctic.player.inject.InjectionKeys;
 import com.amazon.corretto.arctic.player.model.ArcticRunningTest;
 import com.amazon.corretto.arctic.player.model.TestStatusCode;
 import com.amazon.corretto.arctic.player.preprocessing.ArcticPlayerPreProcessor;
+import com.amazon.corretto.arctic.common.model.event.ArcticEvent;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.slf4j.Logger;
@@ -93,7 +94,7 @@ public final class ScreenCheckValidatorPreProcessor implements ArcticPlayerPrePr
             timeController.waitFor(focusWait);
             focusManager.giveFocus(test.getRecording().getFocusPoint());
             timeController.waitFor(focusWait);
-            final ScreenshotCheck sc = screenRecorder.capture(test.getRecording().getInitialSc().getSa());
+            final ScreenshotCheck sc = screenRecorder.capture(test.getRecording().getInitialSc().getSa(),false);
             final boolean result = imageComparator.compare(sc, test.getRecording().getInitialSc(), test.getTestId(),
                     test.getRecording().getScope());
             if (!result && bypass) {

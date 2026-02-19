@@ -22,7 +22,9 @@ import com.amazon.corretto.arctic.common.backend.ArcticScreenRecorder;
 import com.amazon.corretto.arctic.common.model.event.ArcticEvent;
 import com.amazon.corretto.arctic.recorder.backend.ArcticBackendRecorder;
 import com.amazon.corretto.arctic.recorder.control.ArcticController;
+import com.amazon.corretto.arctic.recorder.inject.InjectionKeys;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -30,13 +32,15 @@ import lombok.extern.slf4j.Slf4j;
 public class ScreenCheckBackendRecorder implements ArcticBackendRecorder {
     public static final String NAME = "sc";
     private final ArcticScreenRecorder screenRecorder;
+    private final boolean nativeCapture;
 
     @Getter private List<ArcticEvent> recordingBuffer;
 
     @Inject
-    public ScreenCheckBackendRecorder(final ArcticScreenRecorder screenRecorder) {
+    public ScreenCheckBackendRecorder(final ArcticScreenRecorder screenRecorder, @Named(InjectionKeys.BACKEND_NATIVE_CAPTURE) final boolean nativeCapture) {
         log.debug("ScreenCheckRecorder loaded");
         this.screenRecorder = screenRecorder;
+        this.nativeCapture = nativeCapture;
     }
 
     @Override
@@ -46,7 +50,12 @@ public class ScreenCheckBackendRecorder implements ArcticBackendRecorder {
                 recordingBuffer = new LinkedList<>();
                 break;
             case SCREEN_CHECK:
-                recordingBuffer.add(screenRecorder.capture());
+                if(this.nativeCapture){
+                    recordingBuffer.add(screenRecorder.capture(true));
+                }
+                else{
+                    recordingBuffer.add(screenRecorder.capture());
+                }
                 break;
             default:
                 break;

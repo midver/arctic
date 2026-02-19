@@ -49,6 +49,11 @@ public final class ScreenshotCheck implements ArcticEvent {
     private Path filename;
 
     /**
+     * If present, represents that image should have a mouse cursor captured.
+     */
+    private boolean mouseCursor;
+
+    /**
      * If present, a List of alternative images that are acceptable for this screen check.
      */
     private Set<Path> alternativeImages = new HashSet<>();
@@ -102,5 +107,9 @@ public final class ScreenshotCheck implements ArcticEvent {
     @Override
     public SubType getSubType() {
         return SubType.SCREENSHOT_CHECK;
+    }
+
+    public boolean getMouseCursor() {
+        return mouseCursor;
     }
 }

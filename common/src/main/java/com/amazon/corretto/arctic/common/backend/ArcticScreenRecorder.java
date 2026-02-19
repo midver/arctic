@@ -34,9 +34,17 @@ public interface ArcticScreenRecorder {
     ScreenshotCheck capture();
 
     /**
-     * Generates a ScreenshotCheck based on a specific area, ignoring the workbench position.
-     * @param area Area we will capture relative to the base area.
+     * Generates a ScreenshotCheck based on the workbench position.
+     * @param captureMouseCursor If true, the mouse cursor will be captured as well.
      * @return ScreenshotCheck with basic fields initialized (image, timestamp)
      */
-    ScreenshotCheck capture(ScreenArea area);
+    ScreenshotCheck capture(boolean captureMouseCursor);
+
+    /**
+     * Generates a ScreenshotCheck based on a specific area, ignoring the workbench position.
+     * @param area Area we will capture relative to the base area.
+     * @param captureMouseCursor If true, the mouse cursor will be captured as well.
+     * @return ScreenshotCheck with basic fields initialized (image, timestamp)
+     */
+    ScreenshotCheck capture(ScreenArea area, boolean captureMouseCursor);
 }

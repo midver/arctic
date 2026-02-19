@@ -15,8 +15,14 @@
  */
 package com.amazon.corretto.arctic.common.backend.impl;
 
-import java.awt.Robot;
+import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.stream.Collectors;
+import javax.imageio.ImageIO;
 
 import com.amazon.corretto.arctic.common.backend.ArcticScreenRecorder;
 import com.amazon.corretto.arctic.common.gui.ShadeManager;
@@ -26,6 +32,8 @@ import com.amazon.corretto.arctic.common.model.event.ScreenshotCheck;
 import com.amazon.corretto.arctic.common.model.gui.ScreenArea;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Captures a {@link ScreenshotCheck} using {@link Robot}. The ScreenshotCheck contains not only the image with the
@@ -38,6 +46,7 @@ public class AwtRobotScreenRecorder implements ArcticScreenRecorder {
     private final ShadeManager shadeManager;
     private final int xMargin;
     private final int yMargin;
+    private static final Logger log = LoggerFactory.getLogger(AwtRobotScreenRecorder.class);
 
     /**
      * Creates a new instance of an AwtRobotScreenRecorder.
@@ -65,27 +74,114 @@ public class AwtRobotScreenRecorder implements ArcticScreenRecorder {
      */
     @Override
     public ScreenshotCheck capture() {
+        return capture(false);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public ScreenshotCheck capture(boolean captureMouseCursor) {
         ScreenArea wbsa = wbManager.getScreenArea();
         ScreenArea targetsa = new ScreenArea(
                 wbsa.getX() < xMargin ? 0 : wbsa.getX(),
                 wbsa.getY() < yMargin ? 0 : wbsa.getY(),
                 wbsa.getX() < xMargin ? wbsa.getW() + wbsa.getX() : wbsa.getW(),
                 wbsa.getY() < yMargin ? wbsa.getH() + wbsa.getY() : wbsa.getH());
-        return capture(targetsa);
+        return capture(targetsa, captureMouseCursor);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public ScreenshotCheck capture(final ScreenArea area) {
-        final BufferedImage image = robot.createScreenCapture(area.asRectangle());
+    public ScreenshotCheck capture(final ScreenArea area, boolean captureMouseCursor) {
+        final BufferedImage image;
+        if (captureMouseCursor) {
+            image = nativeCapture(area);
+        } else {
+            image = robot.createScreenCapture(area.asRectangle());
+        }
         final ScreenshotCheck sc = new ScreenshotCheck();
         sc.setImage(image);
         sc.setWorkbench(wbManager.getWorkbench());
         sc.setShades(shadeManager.getShades());
         sc.setSa(area);
         sc.setTimestamp(System.nanoTime());
+        sc.setMouseCursor(captureMouseCursor);
         return sc;
+    }
+    
+    /*
+     * This method is used to capture the screen with the mouse cursor using OS native tool.
+     * It saves image to file, then crops it and returns BufferedImage object.
+     */
+    private static BufferedImage nativeCapture(final ScreenArea area) {
+        String os = System.getProperty("os.name").toLowerCase();
+        String filename = "screen_" + System.currentTimeMillis() + ".png";
+        int captureCmdResult = 0;
+        if (os.contains("linux")) {
+            captureCmdResult = saveScreenToFile("gnome-screenshot", "-p", "-f", filename);
+        } else if (os.contains("mac")) {
+            captureCmdResult = saveScreenToFile("screencapture", "-C", filename);
+        } else if (os.contains("win")) {
+            throw new RuntimeException("Windows is not supported yet");
+        } else {
+            throw new RuntimeException(os + " is not supported");
+        }
+        if (captureCmdResult != 0) {
+            throw new RuntimeException("Failed to capture screen using native tool");
+        }
+        File imgFile = new File(filename);
+        BufferedImage img = getCroppedImageFromFile(area.asRectangle(), imgFile);
+        imgFile.delete();
+        return img;
+    }
+
+    /*
+     * Invoke native OS tool to save the screenshot to a file.
+     */
+    public static int saveScreenToFile (String... nativeToolCmd) {
+        ProcessBuilder processBuilder = new ProcessBuilder(nativeToolCmd);
+        processBuilder.redirectErrorStream(true);
+        int screenShotRun = 0;
+        String output = "";
+        try {
+            Process process = processBuilder.start();
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                output = reader.lines().collect(Collectors.joining(System.lineSeparator()));
+                screenShotRun = process.waitFor();
+            }
+        } catch (IOException | InterruptedException ex) {
+            if (screenShotRun == 0) screenShotRun = 255;
+            output += "Exception: " + ex;
+        }
+        if (screenShotRun != 0) {
+            log.error("Command run: {}%n Return code: {}%n Output/Error Message: {}%n",
+                    String.join(" ", nativeToolCmd), screenShotRun, output);
+        }
+        
+        return screenShotRun;
+    }
+
+    /*
+     * Load data from image file, crop it and return BufferedImage object
+     */
+    private static BufferedImage getCroppedImageFromFile(Rectangle cropRectangle, File imgFile) {
+        BufferedImage image;
+        try {
+            image = ImageIO.read(imgFile);
+        } catch (IOException e) {
+            throw new RuntimeException("Error reading image file " + imgFile.getName(), e);
+        }
+
+        if (cropRectangle != null) {
+            // Ensure the cropRectangle is within the bounds of the image
+            Rectangle bounds = new Rectangle(0, 0, image.getWidth(), image.getHeight());
+            Rectangle croppedRect = cropRectangle.intersection(bounds);
+
+            return image.getSubimage(croppedRect.x, croppedRect.y, croppedRect.width, croppedRect.height);
+        } else {
+            return image;
+        }
     }
 }
