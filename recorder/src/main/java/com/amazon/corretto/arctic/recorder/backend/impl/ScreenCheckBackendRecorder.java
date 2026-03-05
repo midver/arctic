@@ -50,12 +50,7 @@ public class ScreenCheckBackendRecorder implements ArcticBackendRecorder {
                 recordingBuffer = new LinkedList<>();
                 break;
             case SCREEN_CHECK:
-                if(this.nativeCapture){
-                    recordingBuffer.add(screenRecorder.capture(true));
-                }
-                else{
-                    recordingBuffer.add(screenRecorder.capture());
-                }
+                recordingBuffer.add(screenRecorder.capture(this.nativeCapture));
                 break;
             default:
                 break;

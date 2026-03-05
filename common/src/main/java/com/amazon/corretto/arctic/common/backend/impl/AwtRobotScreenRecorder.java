@@ -15,7 +15,8 @@
  */
 package com.amazon.corretto.arctic.common.backend.impl;
 
-import java.awt.*;
+import java.awt.Robot;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
@@ -47,6 +48,7 @@ public class AwtRobotScreenRecorder implements ArcticScreenRecorder {
     private final int xMargin;
     private final int yMargin;
     private static final Logger log = LoggerFactory.getLogger(AwtRobotScreenRecorder.class);
+    private final String nativeCaptureToolLinux;
 
     /**
      * Creates a new instance of an AwtRobotScreenRecorder.
@@ -61,12 +63,14 @@ public class AwtRobotScreenRecorder implements ArcticScreenRecorder {
     @Inject
     public AwtRobotScreenRecorder(final Robot robot, final WorkbenchManager wbManager, final ShadeManager shadeManager,
                                   final @Named(CommonInjectionKeys.SCREEN_CAPTURE_MARGIN_X) int xMargin,
-                                  final @Named(CommonInjectionKeys.SCREEN_CAPTURE_MARGIN_Y) int yMargin) {
+                                  final @Named(CommonInjectionKeys.SCREEN_CAPTURE_MARGIN_Y) int yMargin,
+                                  final @Named(CommonInjectionKeys.NATIVE_CAPTURE_TOOL_LINUX) String nativeCaptureToolLinux) {
         this.robot = robot;
         this.wbManager = wbManager;
         this.shadeManager = shadeManager;
         this.xMargin = xMargin;
         this.yMargin = yMargin;
+        this.nativeCaptureToolLinux = nativeCaptureToolLinux;
     }
 
     /**
@@ -115,12 +119,17 @@ public class AwtRobotScreenRecorder implements ArcticScreenRecorder {
      * This method is used to capture the screen with the mouse cursor using OS native tool.
      * It saves image to file, then crops it and returns BufferedImage object.
      */
-    private static BufferedImage nativeCapture(final ScreenArea area) {
+    private BufferedImage nativeCapture(final ScreenArea area) {
         String os = System.getProperty("os.name").toLowerCase();
         String filename = "screen_" + System.currentTimeMillis() + ".png";
         int captureCmdResult = 0;
         if (os.contains("linux")) {
-            captureCmdResult = saveScreenToFile("gnome-screenshot", "-p", "-f", filename);
+            if(this.nativeCaptureToolLinux == "gnome-screenshot"){
+                captureCmdResult = saveScreenToFile("gnome-screenshot", "-p", "-f", filename);
+            }
+            else{
+                throw new RuntimeException("Unknown tool \'"+ this.nativeCaptureToolLinux + "\'");
+            }
         } else if (os.contains("mac")) {
             throw new RuntimeException("Mac native capture is not supported yet");
         } else if (os.contains("win")) {
@@ -140,7 +149,7 @@ public class AwtRobotScreenRecorder implements ArcticScreenRecorder {
     /*
      * Invoke native OS tool to save the screenshot to a file.
      */
-    public static int saveScreenToFile (String... nativeToolCmd) {
+    public int saveScreenToFile (String... nativeToolCmd) {
         ProcessBuilder processBuilder = new ProcessBuilder(nativeToolCmd);
         processBuilder.redirectErrorStream(true);
         int screenShotRun = 0;

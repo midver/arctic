@@ -34,6 +34,11 @@ public final class CommonInjectionKeys {
      */
     public static final String REPOSITORY_JSON_NAME = PREFIX + "repository.json.file";
 
+    /*
+     * Tool to use when using native screen capture.
+     */
+    public static final String NATIVE_CAPTURE_TOOL_LINUX = PREFIX + "backend.nativeCaptureTool.linux";
+
     public static final String SCOPE_MODE = PREFIX + "repository.scope.mode";
     public static final String REPOSITORY_SCOPE = PREFIX + "repository.scope";
     public static final String SCOPES = PREFIX + "repository.load.scopes";
