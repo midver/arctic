@@ -124,7 +124,7 @@ public class AwtRobotScreenRecorder implements ArcticScreenRecorder {
         String filename = "screen_" + System.currentTimeMillis() + ".png";
         int captureCmdResult = 0;
         if (os.contains("linux")) {
-            if(this.nativeCaptureToolLinux == "gnome-screenshot"){
+            if(this.nativeCaptureToolLinux.equals("gnome-screenshot")){
                 captureCmdResult = saveScreenToFile("gnome-screenshot", "-p", "-f", filename);
             }
             else{
