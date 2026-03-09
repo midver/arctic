@@ -38,6 +38,7 @@ public final class CommonInjectionKeys {
      * Tool to use when using native screen capture.
      */
     public static final String NATIVE_CAPTURE_TOOL_LINUX = PREFIX + "backend.nativeCaptureTool.linux";
+    public static final String NATIVE_CAPTURE_TOOL_MAC = PREFIX + "backend.nativeCaptureTool.mac";
 
     public static final String SCOPE_MODE = PREFIX + "repository.scope.mode";
     public static final String REPOSITORY_SCOPE = PREFIX + "repository.scope";

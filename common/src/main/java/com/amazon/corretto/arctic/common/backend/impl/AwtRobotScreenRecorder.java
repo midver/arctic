@@ -49,6 +49,7 @@ public class AwtRobotScreenRecorder implements ArcticScreenRecorder {
     private final int yMargin;
     private static final Logger log = LoggerFactory.getLogger(AwtRobotScreenRecorder.class);
     private final String nativeCaptureToolLinux;
+    private final String nativeCaptureToolMac;
 
     /**
      * Creates a new instance of an AwtRobotScreenRecorder.
@@ -64,13 +65,15 @@ public class AwtRobotScreenRecorder implements ArcticScreenRecorder {
     public AwtRobotScreenRecorder(final Robot robot, final WorkbenchManager wbManager, final ShadeManager shadeManager,
                                   final @Named(CommonInjectionKeys.SCREEN_CAPTURE_MARGIN_X) int xMargin,
                                   final @Named(CommonInjectionKeys.SCREEN_CAPTURE_MARGIN_Y) int yMargin,
-                                  final @Named(CommonInjectionKeys.NATIVE_CAPTURE_TOOL_LINUX) String nativeCaptureToolLinux) {
+                                  final @Named(CommonInjectionKeys.NATIVE_CAPTURE_TOOL_LINUX) String nativeCaptureToolLinux,
+                                  final @Named(CommonInjectionKeys.NATIVE_CAPTURE_TOOL_MAC) String nativeCaptureToolMac) {
         this.robot = robot;
         this.wbManager = wbManager;
         this.shadeManager = shadeManager;
         this.xMargin = xMargin;
         this.yMargin = yMargin;
         this.nativeCaptureToolLinux = nativeCaptureToolLinux;
+        this.nativeCaptureToolMac = nativeCaptureToolMac;
     }
 
     /**
@@ -131,7 +134,14 @@ public class AwtRobotScreenRecorder implements ArcticScreenRecorder {
                 throw new RuntimeException("Unknown tool \'"+ this.nativeCaptureToolLinux + "\'");
             }
         } else if (os.contains("mac")) {
-            throw new RuntimeException("Mac native capture is not supported yet");
+            if(this.nativeCaptureToolMac.equals("screencapture")){
+                Rectangle r = area.asRectangle();
+                String rectangleStr = String.format("%d,%d,%d,%d", r.x, r.y, r.width, r.height);
+                captureCmdResult = saveScreenToFile("screencapture", "-C", "-R", rectangleStr, filename);
+            }
+            else{
+                throw new RuntimeException("Unknown tool \'"+ this.nativeCaptureToolMac + "\'");
+            }
         } else if (os.contains("win")) {
             throw new RuntimeException("Windows native capture is not supported yet");
         } else {
@@ -140,9 +150,15 @@ public class AwtRobotScreenRecorder implements ArcticScreenRecorder {
         if (captureCmdResult != 0) {
             throw new RuntimeException("Failed to capture screen using native tool");
         }
+        
         File imgFile = new File(filename);
-        BufferedImage img = getCroppedImageFromFile(area.asRectangle(), imgFile);
+        BufferedImage img = readImageFile(imgFile);
         imgFile.delete();
+        
+        if(!os.contains("mac")) {
+            return getCroppedImage(area.asRectangle(), img);
+        }
+        
         return img;
     }
 
@@ -175,14 +191,7 @@ public class AwtRobotScreenRecorder implements ArcticScreenRecorder {
     /*
      * Load data from image file, crop it and return BufferedImage object
      */
-    private static BufferedImage getCroppedImageFromFile(Rectangle cropRectangle, File imgFile) {
-        BufferedImage image;
-        try {
-            image = ImageIO.read(imgFile);
-        } catch (IOException e) {
-            throw new RuntimeException("Error reading image file " + imgFile.getName(), e);
-        }
-
+    private static BufferedImage getCroppedImage(Rectangle cropRectangle, BufferedImage image) {
         if (cropRectangle != null) {
             // Ensure the cropRectangle is within the bounds of the image
             Rectangle bounds = new Rectangle(0, 0, image.getWidth(), image.getHeight());
@@ -192,5 +201,14 @@ public class AwtRobotScreenRecorder implements ArcticScreenRecorder {
         } else {
             return image;
         }
+    }
+    private static BufferedImage readImageFile(File imgFile){
+        try {
+            BufferedImage image = ImageIO.read(imgFile);
+            return image;
+        } catch (IOException e) {
+            throw new RuntimeException("Error reading image file " + imgFile.getName(), e);
+        }
+        
     }
 }
