@@ -137,10 +137,13 @@ public class AwtRobotScreenRecorder implements ArcticScreenRecorder {
         } else {
             throw new RuntimeException(os + "native capture is not supported");
         }
-        if (captureCmdResult != 0) {
+        File imgFile = new File(filename);
+        if (captureCmdResult != 0 || !imgFile.exists()) {
+            if(imgFile.exists()){
+                imgFile.delete();
+            }
             throw new RuntimeException("Failed to capture screen using native tool");
         }
-        File imgFile = new File(filename);
         BufferedImage img = getCroppedImageFromFile(area.asRectangle(), imgFile);
         imgFile.delete();
         return img;
@@ -149,7 +152,7 @@ public class AwtRobotScreenRecorder implements ArcticScreenRecorder {
     /*
      * Invoke native OS tool to save the screenshot to a file.
      */
-    public int saveScreenToFile (String... nativeToolCmd) {
+    private int saveScreenToFile (String... nativeToolCmd) {
         ProcessBuilder processBuilder = new ProcessBuilder(nativeToolCmd);
         processBuilder.redirectErrorStream(true);
         int screenShotRun = 0;
