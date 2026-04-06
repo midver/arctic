@@ -41,6 +41,10 @@ public class ScreenCheckBackendRecorder implements ArcticBackendRecorder {
         log.debug("ScreenCheckRecorder loaded");
         this.screenRecorder = screenRecorder;
         this.nativeCapture = nativeCapture;
+
+        if(this.nativeCapture){
+            validateNativeCaptureSupport();
+        }
     }
 
     @Override
@@ -60,5 +64,16 @@ public class ScreenCheckBackendRecorder implements ArcticBackendRecorder {
     @Override
     public String getName() {
         return NAME;
+    }
+
+    private void validateNativeCaptureSupport(){
+        String os = System.getProperty("os.name").toLowerCase();
+        if (!os.contains("linux")) {
+            throw new IllegalStateException(
+                "Native screen capture is only supported on Linux. " +
+                "Detected OS: " + System.getProperty("os.name") + ". " +
+                "Please disable 'arctic.recorder.backend.nativeCapture'"
+            );
+        }
     }
 }

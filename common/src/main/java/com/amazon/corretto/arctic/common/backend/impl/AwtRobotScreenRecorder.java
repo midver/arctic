@@ -72,6 +72,7 @@ public class AwtRobotScreenRecorder implements ArcticScreenRecorder {
         this.yMargin = yMargin;
         this.nativeCaptureToolLinux = nativeCaptureToolLinux;
     }
+    
 
     /**
      * {@inheritDoc}
@@ -128,7 +129,7 @@ public class AwtRobotScreenRecorder implements ArcticScreenRecorder {
                 captureCmdResult = saveScreenToFile("gnome-screenshot", "-p", "-f", filename);
             }
             else{
-                throw new RuntimeException("Unknown tool \'"+ this.nativeCaptureToolLinux + "\'");
+                throw new RuntimeException("Unknown tool \'"+ this.nativeCaptureToolLinux + "\'. Please check ");
             }
         } else if (os.contains("mac")) {
             throw new RuntimeException("Mac native capture is not supported yet");
@@ -138,14 +139,18 @@ public class AwtRobotScreenRecorder implements ArcticScreenRecorder {
             throw new RuntimeException(os + "native capture is not supported");
         }
         File imgFile = new File(filename);
-        if (captureCmdResult != 0 || !imgFile.exists()) {
-            if(imgFile.exists()){
-                imgFile.delete();
+        BufferedImage img;
+        try {
+            if (captureCmdResult != 0 || !imgFile.exists()) {
+                throw new RuntimeException("Failed to capture screen using native tool " + this.nativeCaptureToolLinux +
+                    ". Please make sure it is installed and available in PATH."
+                );
             }
-            throw new RuntimeException("Failed to capture screen using native tool");
+            img = getCroppedImageFromFile(area.asRectangle(), imgFile);
         }
-        BufferedImage img = getCroppedImageFromFile(area.asRectangle(), imgFile);
-        imgFile.delete();
+        finally {
+            imgFile.delete();
+        }
         return img;
     }
 
