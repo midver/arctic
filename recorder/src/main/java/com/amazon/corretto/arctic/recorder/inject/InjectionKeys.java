@@ -26,6 +26,7 @@ public class InjectionKeys {
 
     public static final String BACKEND_RECORDERS = PREFIX + "backend.recorders";
     public static final String BACKEND_RECORDING_MODE = PREFIX + "backend.recordingMode";
+    public static final String BACKEND_NATIVE_CAPTURE = PREFIX + "backend.nativeCapture";
     public static final String OFFSET_PROVIDER = PREFIX + "offset.provider";
     public static final String OFFSET_FIXED_X = PREFIX + "offset.fixed.x";
     public static final String OFFSET_AWT_EXTRA = PREFIX + "offset.awt.extra";

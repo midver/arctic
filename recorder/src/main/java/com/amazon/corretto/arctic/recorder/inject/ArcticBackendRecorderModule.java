@@ -66,7 +66,8 @@ public final class ArcticBackendRecorderModule extends ArcticModule {
             JnhMouseRecorder.NAME, ArcticBackendRecorderModule::registerJnhMouse,
             JnhMouseMoveRecorder.NAME, ArcticBackendRecorderModule::registerJnhMouseMove,
             JnhMouseWheelRecorder.NAME, ArcticBackendRecorderModule::registerJnhMouseWheel,
-            JnhKeyboardRecorder.NAME, ArcticBackendRecorderModule::registerJnhKeyboard);
+            JnhKeyboardRecorder.NAME, ArcticBackendRecorderModule::registerJnhKeyboard,
+            ScreenCheckBackendRecorder.NAME, ArcticBackendRecorderModule::registerNativeCapture);
 
     /**
      * Constructor for the module.
@@ -119,5 +120,9 @@ public final class ArcticBackendRecorderModule extends ArcticModule {
 
     private void registerJnhKeyboard() {
         bind(new TypeLiteral<Function<NativeKeyEvent, KeyboardEvent>>(){}).to(JnhNativeKeyEvent2ArcticEvent.class);
+    }
+
+    private void registerNativeCapture() {
+        bindFromConfig(Boolean.class, InjectionKeys.BACKEND_NATIVE_CAPTURE, List.of(true, false));
     }
 }

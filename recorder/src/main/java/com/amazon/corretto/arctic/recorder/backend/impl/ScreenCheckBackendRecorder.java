@@ -22,7 +22,9 @@ import com.amazon.corretto.arctic.common.backend.ArcticScreenRecorder;
 import com.amazon.corretto.arctic.common.model.event.ArcticEvent;
 import com.amazon.corretto.arctic.recorder.backend.ArcticBackendRecorder;
 import com.amazon.corretto.arctic.recorder.control.ArcticController;
+import com.amazon.corretto.arctic.recorder.inject.InjectionKeys;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -30,13 +32,19 @@ import lombok.extern.slf4j.Slf4j;
 public class ScreenCheckBackendRecorder implements ArcticBackendRecorder {
     public static final String NAME = "sc";
     private final ArcticScreenRecorder screenRecorder;
+    private final boolean nativeCapture;
 
     @Getter private List<ArcticEvent> recordingBuffer;
 
     @Inject
-    public ScreenCheckBackendRecorder(final ArcticScreenRecorder screenRecorder) {
+    public ScreenCheckBackendRecorder(final ArcticScreenRecorder screenRecorder, @Named(InjectionKeys.BACKEND_NATIVE_CAPTURE) final boolean nativeCapture) {
         log.debug("ScreenCheckRecorder loaded");
         this.screenRecorder = screenRecorder;
+        this.nativeCapture = nativeCapture;
+
+        if(this.nativeCapture){
+            validateNativeCaptureSupport();
+        }
     }
 
     @Override
@@ -46,7 +54,7 @@ public class ScreenCheckBackendRecorder implements ArcticBackendRecorder {
                 recordingBuffer = new LinkedList<>();
                 break;
             case SCREEN_CHECK:
-                recordingBuffer.add(screenRecorder.capture());
+                recordingBuffer.add(screenRecorder.capture(this.nativeCapture));
                 break;
             default:
                 break;
@@ -56,5 +64,16 @@ public class ScreenCheckBackendRecorder implements ArcticBackendRecorder {
     @Override
     public String getName() {
         return NAME;
+    }
+
+    private void validateNativeCaptureSupport(){
+        String os = System.getProperty("os.name").toLowerCase();
+        if (!os.contains("linux")) {
+            throw new IllegalStateException(
+                "Native screen capture is only supported on Linux. " +
+                "Detected OS: " + System.getProperty("os.name") + ". " +
+                "Please disable 'arctic.recorder.backend.nativeCapture'"
+            );
+        }
     }
 }

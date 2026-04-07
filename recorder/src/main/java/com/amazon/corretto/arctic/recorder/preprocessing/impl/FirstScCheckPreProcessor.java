@@ -20,6 +20,7 @@ import com.amazon.corretto.arctic.api.exception.ArcticException;
 import com.amazon.corretto.arctic.common.backend.ArcticScreenRecorder;
 import com.amazon.corretto.arctic.common.gui.WorkbenchManager;
 import com.amazon.corretto.arctic.common.model.ArcticTest;
+import com.amazon.corretto.arctic.common.model.event.ArcticEvent;
 import com.amazon.corretto.arctic.common.model.event.ScreenshotCheck;
 import com.amazon.corretto.arctic.common.model.gui.ScreenArea;
 import com.amazon.corretto.arctic.recorder.inject.InjectionKeys;
@@ -57,7 +58,7 @@ public final class FirstScCheckPreProcessor implements ArcticRecorderPreProcesso
         final ScreenArea wbArea = wbManager.getScreenArea();
         final int matchHeight = test.getFocusPoint().getY() - wbArea.getY() + matchSize;
         final ScreenArea sa = new ScreenArea(wbArea.getX(), wbArea.getY(), wbArea.getW(), matchHeight);
-        final ScreenshotCheck sc = screenRecorder.capture(sa);
+        final ScreenshotCheck sc = screenRecorder.capture(sa, false);
         test.setInitialSc(sc);
         sc.setTimestamp(0);
         return true;
